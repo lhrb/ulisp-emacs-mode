@@ -233,11 +233,13 @@ SPEED: baudrate default 9600"
   (list (cons (regexp-opt ulisp-font-lock-built-in--functions 'words) font-lock-builtin-face)
         (cons (regexp-opt ulisp-font-lock-built-in--symbols 'words) font-lock-keyword-face)))
 
+;;;###autoload
 (define-derived-mode ulisp-mode lisp-mode "uLisp Mode"
   "Major mode for editing ulisp."
   (font-lock-add-keywords nil ulisp-font-lock-defaults)
   (use-local-map ulisp-keymap))
 
+;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.ulisp" . ulisp-mode))
 (add-hook 'ulisp-mode-hook 'paredit-mode)
 
