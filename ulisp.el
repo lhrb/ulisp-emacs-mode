@@ -45,7 +45,7 @@ SPEED: baudrate default 9600"
   (let ((bounds (bounds-of-thing-at-point 'sexp)))
     (if bounds
         (let ((process (get-process ulisp-process-name)))
-          (if (and process (process-live-p process))
+          (if (and process (process-live-p process)) ;; reconnect?
               (progn
                 (process-send-region process (car bounds) (cdr bounds))
                 (sleep-for 0.1)
@@ -57,143 +57,53 @@ SPEED: baudrate default 9600"
             (message "Serial process not found or not running")))
       (message "No sexp found before the cursor."))))
 
+(defun ulisp-interrupt-eval ()
+  "Sends interrupt signal to ulisp repl."
+  (interactive)
+  (let ((process (get-process ulisp-process-name)))
+    (if (and process (process-live-p process))
+        (progn
+          (process-send-string process "~")
+          (sleep-for 0.1)
+          (with-current-buffer (process-buffer process)
+                  (let ((output (buffer-string)))
+                    (message "Received: %s" output)
+                    (erase-buffer)
+                    (insert output))))
+      (message "Serial process not found or not running"))))
+
 (defvar ulisp-keymap
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "C-c C-e") 'ulisp-eval-sexp)
+    (define-key map (kbd "C-c C-b") 'ulisp-interrupt-eval)
     map))
 
+
+(defun ulisp-eval-pprint ()
+  (interactive)
+  (let* ((bbounds (bounds-of-thing-at-point 'sexp)))))
+
+(pop-to-buffer "*ulisp-pprint*")
+(setq split-width-threshold 160)
+
 (defvar ulisp-font-lock-built-in--functions
-  '("*"
-    "+"
-    "-"
-    "/"
-    "/="
-    "1+"
-    "1-"
-    "<"
-    "<="
-    "="
-    ">"
-    ">="
-    "abs"
-    "analogread"
-    "analogreadresolution"
-    "analogreference"
-    "analogwrite"
-    "analogwriteresolution"
-    "append"
-    "apply"
-    "aref"
-    "array-dimensions"
-    "arrayp"
-    "ash"
-    "assoc"
-    "atom"
-    "boundp"
-    "break"
-    "caaar"
-    "caadr"
-    "caar"
-    "cadar"
-    "caddr"
-    "cadr"
-    "car"
-    "cdaar"
-    "cdadr"
-    "cdar"
-    "cddar"
-    "cdddr"
-    "cddr"
-    "cdr"
-    "char"
-    "char-code"
-    "characterp"
-    "code-char"
-    "concatenate"
-    "cons"
-    "consp"
-    "delay"
-    "digitalread"
-    "digitalwrite"
-    "documentation"
-    "edit"
-    "eq"
-    "eval"
-    "evenp"
-    "first"
-    "for-millis"
-    "format"
-    "funcall"
-    "gc"
-    "globals"
-    "length"
-    "length"
-    "list"
-    "list-library"
-    "listp"
-    "load-image"
-    "logand"
-    "logbitp"
-    "logior"
-    "lognot"
-    "logxor"
-    "make-array"
-    "makunbound"
-    "mapc"
-    "mapcan"
-    "mapcar"
-    "max"
-    "member"
-    "millis"
-    "min"
-    "minusp"
-    "mod"
-    "not"
-    "note"
-    "nth"
-    "null"
-    "numberp"
-    "oddp"
-    "pinmode"
-    "plusp"
-    "pprint"
-    "pprintall"
-    "prin1"
-    "prin1-to-string"
-    "princ"
-    "princ-to-string"
-    "print"
-    "random"
-    "read"
-    "read-byte"
-    "read-from-string"
-    "read-line"
-    "register"
-    "require"
-    "rest"
-    "restart-i2c"
-    "reverse"
-    "room"
-    "save-image"
-    "second"
-    "set"
-    "sleep"
-    "sort"
-    "streamp"
-    "string"
-    "string<"
-    "string="
-    "string>"
-    "stringp"
-    "subseq"
-    "symbolp"
-    "terpri"
-    "third"
-    "with-sd-card"
-    "write-byte"
-    "write-line"
-    "write-string"
-    "zerop"))
+  '("*" "+" "-" "/" "/=" "1+" "1-" "<" "<=" "=" ">" ">=" "abs" "analogread"
+    "analogreadresolution" "analogreference" "analogwrite" "analogwriteresolution"
+    "append" "apply" "aref" "array-dimensions" "arrayp" "ash" "assoc" "atom"
+    "boundp" "break" "caaar" "caadr" "caar" "cadar" "caddr" "cadr" "car" "cdaar"
+    "cdadr" "cdar" "cddar" "cdddr" "cddr""cdr" "char" "char-code" "characterp"
+    "code-char" "concatenate" "cons" "consp" "delay" "digitalread" "digitalwrite"
+    "documentation" "edit" "eq" "eval" "evenp" "first" "for-millis" "format"
+    "funcall" "gc" "globals" "length" "length" "list" "list-library" "listp"
+    "load-image" "logand" "logbitp" "logior" "lognot" "logxor" "make-array"
+    "makunbound" "mapc" "mapcan" "mapcar" "max" "member" "millis" "min"
+    "minusp" "mod" "not" "note" "nth" "null" "numberp" "oddp" "pinmode" "plusp"
+    "pprint" "pprintall" "prin1" "prin1-to-string" "princ" "princ-to-string"
+    "print" "random" "read" "read-byte" "read-from-string" "read-line" "register"
+    "require" "rest" "restart-i2c" "reverse" "room" "save-image" "second" "set"
+    "sleep" "sort" "streamp" "string" "string<" "string=" "string>" "stringp"
+    "subseq" "symbolp" "terpri" "third" "with-sd-card" "write-byte" "write-line"
+    "write-string" "zerop"))
 
 (defvar ulisp-font-lock-built-in--macros
   '("#'" "#*" "#." "#\\" "#(" "#nA" "#|" "#b" "#o" "#x"))
